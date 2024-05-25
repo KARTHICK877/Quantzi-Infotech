@@ -9,6 +9,7 @@ const educationSchema = new mongoose.Schema({
 });
 
 const personalDetailsSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true, ref: 'User' },
   fatherName: { type: String, required: true },
   motherName: { type: String, required: true },
   street: { type: String, required: true },
@@ -18,8 +19,7 @@ const personalDetailsSchema = new mongoose.Schema({
   country: { type: String, required: true },
   pincode: { type: String, required: true },
   educationDetails: [educationSchema],
-  userId: { type: String, required: true, unique: true },
-});
+ });
 
 const PersonalDetails = mongoose.model('PersonalDetails', personalDetailsSchema);
 

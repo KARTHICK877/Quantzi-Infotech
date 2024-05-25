@@ -38,34 +38,13 @@ exports.getAllUsersWithPersonalDetails = async (req, res) => {
     const users = await User.aggregate([
       {
         $lookup: {
-          from: 'personaldetails',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'personalDetails'
+         from: 'personaldetails',
+          localField: 'user_id',
+          foreignField: 'user_id',
+          as: 'personalDetail'
         }
       },
-      { $unwind: '$personalDetails' },
-      {
-        $project: {
-          name: 1,
-          emailId: 1,
-          phoneNumber: 1,
-          type: 1,
-          role: 1,
-          userId: 1,
-          personalDetails: {
-            fatherName: 1,
-            motherName: 1,
-            street: 1,
-            area: 1,
-            city: 1,
-            state: 1,
-            country: 1,
-            pincode: 1,
-            educationDetails: 1
-          }
-        }
-      }
+      { $unwind: '$personalDetail' } 
     ]);
 
     res.json(users);
@@ -87,15 +66,70 @@ exports.addOrUpdatePersonalDetails = async (req, res) => {
   }
 };
 
-// Get personal details for a user
-exports.getPersonalDetailsByUserId = async (req, res) => {
+
+
+exports.updatePersonalDetails = async (req, res) => {
   try {
-    const personalDetails = await PersonalDetails.findOne({ userId: req.params.userId });
-    if (!personalDetails) {
-      return res.status(404).json({ message: 'Personal details not found for the user' });
-    }
-    res.json(personalDetails);
+     const personinfo = await PersonalDetails.findOneAndUpdate(
+      { userId: req.params.userId }, req.body,
+      { new: true, runValidators: true }
+
+    );
+ if(!personinfo){
+  return res.status(404).json({ message: 'update failed' });
+
+ }
+ 
+      return res.status(200).json(personinfo);
+
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
+exports.deletePersonalDetails = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const deletedPersonalDetail = await PersonalDetails.findOneAndDelete({ userId: userId });
+
+    if (!deletedPersonalDetail) {
+      return res.status(404).json({ message: 'Personal details not found for this user' });
+    }
+
+    res.status(200).json({ message: 'Personal details deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
+// Get personal details for a user
+exports.getuserDetailsbyId = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const userInfo = await User.aggregate([
+      { $match: { userId: userId } },
+      {
+        $lookup: {
+          from: 'personaldetails',
+          localField: 'userId', // Corrected to match the User field
+          foreignField: 'userId', // Corrected to match the PersonalDetails field
+          as: 'personalDetail'
+        }
+      },
+      { $unwind: '$personalDetail' } // Unwind the array to get object
+    ]);
+
+    if (userInfo.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(userInfo[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user info', error: error.message });
   }
 };

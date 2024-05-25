@@ -3,13 +3,14 @@ const bcrypt = require('bcrypt');
 const generateUniqueId = require('../utils/generateUniqueId');
 
 const userSchema = new mongoose.Schema({
+  userId: { type: String, unique: true, default: generateUniqueId },
   name: { type: String, required: true },
   emailId: { type: String, required: true, unique: true },
   phoneNumber: { type: String, required: true },
   password: { type: String, required: true },
   type: { type: String, enum: ['Email', 'Google', 'Facebook'], required: true },
   role: { type: String, enum: ['Executive Officer', 'Joint', 'Joint Managing Director', 'Managing Director'], required: true },
-  userId: { type: String, unique: true, default: generateUniqueId },
+ 
 });
 
 userSchema.pre('save', async function(next) {
